@@ -29,7 +29,7 @@ scores = q(f"SELECT * FROM {FQ}.deal_scorecard ORDER BY deal_id")
 flags = q(f"SELECT * FROM {FQ}.deal_red_flags")
 memos = q(f"SELECT deal_id, memo_md FROM {FQ}.ic_memos")
 
-st.title("🏢 CRE Deal Due-Diligence Copilot")
+st.title("CRE Deal Due-Diligence Copilot")
 st.dataframe(scores[["deal_id", "property_name", "location", "recommendation", "high_flags",
                      "physical_occupancy", "om_occupancy", "t12_noi", "om_noi", "cap_rate_actual", "dscr"]],
              hide_index=True, use_container_width=True)
@@ -46,17 +46,17 @@ c[4].metric("Recommendation", s.recommendation)
 
 left, right = st.columns(2)
 with left:
-    st.subheader("🚩 Red flags")
-    icon = {"HIGH": "🔴", "MEDIUM": "🟠", "OPPORTUNITY": "🟢"}
+    st.subheader("Red flags")
+    color = {"HIGH": "red", "MEDIUM": "orange", "OPPORTUNITY": "green"}
     for _, f in flags[flags.deal_id == deal].iterrows():
-        st.markdown(f"{icon.get(f.severity, '•')} **{f.severity}** — {f.message}")
+        st.markdown(f":{color.get(f.severity, 'gray')}[**{f.severity}**] — {f.message}")
 with right:
-    st.subheader("📝 IC memo")
+    st.subheader("IC memo")
     m = memos[memos.deal_id == deal]
     st.markdown(m.memo_md.iloc[0] if len(m) else "_Run notebook 04 to generate the memo._")
 
 st.divider()
-st.subheader("💬 Ask about this deal")
+st.subheader("Ask about this deal")
 if question := st.chat_input("e.g. What price would get DSCR to 1.30x?"):
     context = json.dumps({"scorecard": s.to_dict(), "red_flags": flags[flags.deal_id == deal].to_dict("records")},
                          default=str)
