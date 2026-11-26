@@ -19,6 +19,7 @@ code generation, synthetic data, tests and documentation. The rule throughout: *
 |---|---|---|
 | Invalid Spark SQL: `from_json(...) AS claims.*` | Code review against the Spark SQL grammar | Nested subquery with `c.*` |
 | `collect_list` over a LEFT JOIN added a `{null, null}` flag for deals with no flags | Reasoning through the clean deal (D001) | `filter(..., x -> x.severity IS NOT NULL)` |
+| The patched query then failed on Databricks with `MISSING_AGGREGATION` (`GROUP BY ALL` + `struct(s.*)`) | First end-to-end run of the Workflow on a live workspace | Aggregate flags in their own CTE, then join |
 | Empty flag list would crash `createDataFrame` (no schema to infer) | Edge-case review | Explicit schema |
 | PDFs differed on every run (embedded timestamps), so the CI reproducibility check failed | A CI-style `git diff --exit-code` check | `rl_config.invariant = 1` |
 | The value-add deal scored PASS, which is unrealistic | Domain sanity check of the output | Re-tuned the synthetic data and verified that the rules behave as an analyst would expect |
