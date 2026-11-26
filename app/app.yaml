@@ -1,8 +1,0 @@
-command: ["streamlit", "run", "app.py"]
-env:
-  - name: DATABRICKS_WAREHOUSE_ID
-    valueFrom: sql-warehouse
-  - name: DD_SCHEMA
-    value: "main.cre_dd"
-  - name: LLM_ENDPOINT
-    valueFrom: serving-endpoint

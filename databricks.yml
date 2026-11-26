@@ -51,6 +51,16 @@ resources:
       name: cre-deal-copilot
       description: Deal due-diligence copilot for CRE acquisitions
       source_code_path: ./app
+      # Runtime config lives here (not app/app.yaml) so catalog/schema follow the deploy target
+      config:
+        command: ["streamlit", "run", "app.py"]
+        env:
+          - name: DATABRICKS_WAREHOUSE_ID
+            value_from: sql-warehouse
+          - name: LLM_ENDPOINT
+            value_from: serving-endpoint
+          - name: DD_SCHEMA
+            value: "${var.catalog}.${var.schema}"
       resources:
         - name: sql-warehouse
           sql_warehouse: { id: "${var.warehouse_id}", permission: CAN_USE }
