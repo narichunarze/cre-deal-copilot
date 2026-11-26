@@ -19,6 +19,7 @@ Write a concise Investment Committee pre-screen memo in {LANG} (max ~350 words, 
 Rules: use ONLY the numbers provided in the JSON; never invent figures; percentages are fractions (0.95 = 95%).
 Do NOT cite market comps, benchmarks or per-unit values for the submarket: none are provided.
 loan_amount / annual_debt_service describe the PROPOSED acquisition loan, not existing debt.
+"OM" means Offering Memorandum (the seller's marketing document). If a figure is not in the JSON, write "n/a".
 Keep the system recommendation unless the data clearly contradicts it.
 
 DEAL DATA (JSON):
@@ -37,7 +38,10 @@ spark.sql(f"""
            to_json(named_struct(
              'scorecard', struct(s.*),
              'red_flags', f.red_flags,
-             'om_highlights', c.investment_highlights)) AS payload
+             'om_highlights', c.investment_highlights,
+             'proposed_loan_terms', named_struct('ltv_pct', c.proposed_ltv_pct,
+                                                 'interest_rate_pct', c.proposed_interest_rate_pct,
+                                                 'amortization_years', c.amortization_years))) AS payload
     FROM {FQ}.deal_scorecard s
     LEFT JOIN flags f ON f.deal_id = s.deal_id
     LEFT JOIN {FQ}.om_claims c ON c.deal_id = s.deal_id
