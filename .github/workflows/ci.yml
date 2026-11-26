@@ -1,0 +1,30 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-dev.txt
+      - run: python scripts/generate_sample_data.py && git diff --exit-code data/   # sample data is reproducible
+      - run: pytest -q tests
+
+  deploy:
+    needs: test
+    # Only on main, and only once the workspace is configured in repo settings
+    if: github.ref == 'refs/heads/main' && vars.DATABRICKS_HOST != ''
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t prod --var warehouse_id=${{ vars.DATABRICKS_WAREHOUSE_ID }}
+      - run: databricks bundle deploy -t prod --var warehouse_id=${{ vars.DATABRICKS_WAREHOUSE_ID }}

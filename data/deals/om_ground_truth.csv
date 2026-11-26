@@ -1,0 +1,4 @@
+deal_id,property_name,units,asking_price,claimed_occupancy_pct,claimed_noi,claimed_cap_rate_pct,proposed_ltv_pct,proposed_interest_rate_pct,amortization_years
+D001,Lakeview Apartments,240,40000000,95.5,2753000.0,6.88,60.0,6.25,30
+D002,Riverbend Commons,180,15500000,95.0,1262000.0,8.14,75.0,6.5,30
+D003,Cedar Ridge Residences,150,16500000,91.7,1031000.0,6.25,60.0,6.4,30

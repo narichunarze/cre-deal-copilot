@@ -1,0 +1,65 @@
+# Databricks Asset Bundle: deploys the screening Workflow + the Copilot App as code.
+#   databricks bundle deploy -t dev --var warehouse_id=<id>
+#   databricks bundle run deal_screening -t dev
+bundle:
+  name: cre-deal-copilot
+
+variables:
+  catalog:
+    default: main
+  schema:
+    default: cre_dd
+  llm_endpoint:
+    description: Foundation Model API chat endpoint used by ai_query and the app
+    default: databricks-gpt-oss-120b
+  warehouse_id:
+    description: SQL warehouse the app queries
+
+resources:
+  jobs:
+    deal_screening:
+      name: "CRE deal screening"
+      description: Parse OM -> extract claims -> evaluate extraction -> underwrite -> IC memo
+      parameters:
+        - { name: catalog, default: "${var.catalog}" }
+        - { name: schema, default: "${var.schema}" }
+        - { name: llm_endpoint, default: "${var.llm_endpoint}" }
+        - { name: as_of_date, default: "2026-10-31" }
+      # Runs automatically when acquisitions drops a new deal package in the volume
+      trigger:
+        pause_status: PAUSED
+        file_arrival:
+          url: "/Volumes/${var.catalog}/${var.schema}/deal_docs/"
+      tasks:
+        - task_key: ingest_and_parse
+          notebook_task: { notebook_path: ./notebooks/01_ingest_and_parse.py }
+        - task_key: extract_om_claims
+          depends_on: [{ task_key: ingest_and_parse }]
+          notebook_task: { notebook_path: ./notebooks/02_extract_om_claims.py }
+        - task_key: evaluate_extraction   # quality gate on AI output
+          depends_on: [{ task_key: extract_om_claims }]
+          notebook_task: { notebook_path: ./notebooks/05_evaluate_extraction.py }
+        - task_key: underwrite
+          depends_on: [{ task_key: evaluate_extraction }]
+          notebook_task: { notebook_path: ./notebooks/03_underwrite.py }
+        - task_key: ic_memo
+          depends_on: [{ task_key: underwrite }]
+          notebook_task: { notebook_path: ./notebooks/04_ic_memo.py }
+
+  apps:
+    deal_copilot:
+      name: cre-deal-copilot
+      description: Deal due-diligence copilot for CRE acquisitions
+      source_code_path: ./app
+      resources:
+        - name: sql-warehouse
+          sql_warehouse: { id: "${var.warehouse_id}", permission: CAN_USE }
+        - name: serving-endpoint
+          serving_endpoint: { name: "${var.llm_endpoint}", permission: CAN_QUERY }
+
+targets:
+  dev:
+    mode: development
+    default: true
+  prod:
+    mode: production
